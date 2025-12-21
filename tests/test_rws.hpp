@@ -10,6 +10,7 @@
 #include "../sequences/ArraySequence.hpp"
 using namespace std;
 
+
 // Вспомогательная функция для проверки существования файла
 inline bool fileExists(const string& filename) {
     struct stat buffer;

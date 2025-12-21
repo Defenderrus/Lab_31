@@ -530,6 +530,18 @@ class IntDeserializer: public Deserializer<int> {
         int Deserialize(const string &data) override { return stoi(data); }
 };
 
+// Класс десериализатора для double
+class DoubleDeserializer: public Deserializer<double> {
+    public:
+        double Deserialize(const string &data) override { return stod(data); }
+};
+
+// Класс десериализатора для char
+class CharDeserializer: public Deserializer<char> {
+    public:
+        char Deserialize(const string &data) override { return (data.empty() ? '\0' : data[0]); }
+};
+
 // Класс десериализатора для string
 class StringDeserializer: public Deserializer<string> {
     public:
@@ -540,6 +552,18 @@ class StringDeserializer: public Deserializer<string> {
 class IntSerializer: public Serializer<int> {
     public:
         string Serialize(const int &item) override { return to_string(item); }
+};
+
+// Класс сериализатора для double
+class DoubleSerializer: public Serializer<double> {
+    public:
+        string Serialize(const double &item) override { return to_string(item); }
+};
+
+// Класс сериализатора для char  
+class CharSerializer: public Serializer<char> {
+    public:
+        string Serialize(const char &item) override { return to_string(item); }
 };
 
 // Класс сериализатора для string  
