@@ -179,6 +179,15 @@ class StreamStatistics<string> {
                 }
             }
         }
+
+        // Сбор из Sequence
+        void CollectFromSequence(shared_ptr<Sequence<string>> seq) {
+            if (!seq) throw invalid_argument("Пустая последовательность!");
+            size_t length = seq->GetLength();
+            for (size_t i = 0; i < length; i++) {
+                Process(seq->Get(i));
+            }
+        }
     
         // Получить все статистики
         string GetAllStatistics() const {

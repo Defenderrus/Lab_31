@@ -205,6 +205,8 @@ TEST_F(LazySequenceTest, InsertAtOperations) {
     EXPECT_EQ(seq1->GetLength(), 4);
     EXPECT_EQ(seq1->Get(0), 0);
     EXPECT_EQ(seq1->Get(1), 1);
+    EXPECT_EQ(seq1->Get(2), 2);
+    EXPECT_EQ(seq1->Get(3), 3);
     delete seq1;
     
     // Вставка в середину
@@ -214,6 +216,7 @@ TEST_F(LazySequenceTest, InsertAtOperations) {
     EXPECT_EQ(seq2->Get(0), 1);
     EXPECT_EQ(seq2->Get(1), 99);
     EXPECT_EQ(seq2->Get(2), 2);
+    EXPECT_EQ(seq2->Get(3), 3);
     delete seq2;
     
     // Вставка в конец

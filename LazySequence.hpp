@@ -298,27 +298,25 @@ class LazySequence: public Sequence<T> {
             auto new_seq = new LazySequence<T>();
             auto inserted = make_shared<bool>(false);
             auto current = make_shared<size_t>(0);
+            auto source_index = make_shared<size_t>(0);
             auto temp_length = make_shared<size_t>(GetLength());
             auto temp_seq = make_shared<LazySequence<T>>(*this);
             new_seq->generator = make_shared<Generator<T>>(
-                [temp_seq, temp_length, item, index, current, inserted]() mutable -> T {
+                [temp_seq, temp_length, item, index, current, source_index, inserted]() mutable -> T {
                     if (!(*inserted) && *current == index) {
                         *inserted = true;
+                        (*current)++;
                         return item;
-                    }
-                    size_t temp_current = *current;
-                    if (*inserted && *current > index) {
-                        temp_current = *current-1;
-                    }
-                    if (temp_current < *temp_length) {
-                        T value = temp_seq->Get(temp_current);
+                    } else {
+                        T value = temp_seq->Get(*source_index);
+                        (*source_index)++;
                         (*current)++;
                         return value;
                     }
-                    throw runtime_error("Нет больше элементов!");
                 },
-                [temp_length, current]() mutable -> bool {
-                    return *current < (*temp_length+1);
+                [temp_length, current, inserted]() mutable -> bool {
+                    if (!(*inserted)) return true;
+                    return (*current-1) < (*temp_length+1);
                 }
             );
             new_seq->length = Cardinal::Finite(*temp_length+1);
@@ -386,23 +384,10 @@ class LazySequence: public Sequence<T> {
         Sequence<T>* GetSubsequence(size_t startIndex, size_t endIndex) override {
             if (startIndex > endIndex) throw out_of_range("Начальный индекс больше конечного!");
             if (length.IsFinite() && endIndex >= length.GetFiniteValue()) throw out_of_range("Индекс выходит за пределы последовательности!");
-            auto new_seq = new LazySequence<T>();
-            auto current = make_shared<size_t>(0);
-            auto temp_seq = make_shared<LazySequence<T>>(*this);
-            new_seq->generator = make_shared<Generator<T>>(
-                [temp_seq, startIndex, endIndex, current]() mutable -> T {
-                    size_t index = startIndex+*current;
-                    if (index > endIndex) throw runtime_error("Достигнут конец подпоследовательности!");
-                    T value = temp_seq->Get(index);
-                    (*current)++;
-                    return value;
-                },
-                [startIndex, endIndex, current]() mutable -> bool {
-                    return startIndex+*current <= endIndex;
-                }
-            );
-            new_seq->length = Cardinal::Finite(endIndex-startIndex+1);
-            return new_seq;
+            size_t sub_len = endIndex - startIndex + 1;
+            DynamicArray<T> sub_arr(sub_len);
+            for (size_t i = 0; i < sub_len; i++) sub_arr.Set(i, Get(startIndex + i));
+            return new LazySequence(sub_arr);
         }
 
         // Дополнительные операции

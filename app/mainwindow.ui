@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1000</width>
+    <height>750</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Система последовательностей и потоков</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow {
+    background-color: #ffffff;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+QGroupBox {
+    font-weight: bold;
+    font-size: 11pt;
+    border: 2px solid #e0e0e0;
+    border-radius: 4px;
+    margin-top: 10px;
+    padding-top: 12px;
+    background-color: #fafafa;
+    color: #333333;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 8px;
+    background-color: #fafafa;
+    color: #2e7d32;
+}
+
+QFrame {
+    background-color: transparent;
+}
+
+QTextEdit, QLineEdit, QPlainTextEdit {
+    border: 1px solid #cccccc;
+    border-radius: 3px;
+    padding: 6px 8px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 10pt;
+    background-color: white;
+    selection-background-color: #4caf50;
+}
+
+QTextEdit:focus, QLineEdit:focus, QPlainTextEdit:focus {
+    border: 1px solid #4caf50;
+    outline: none;
+}
+
+QPushButton {
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 8px 8px;
+    font-weight: normal;
+    font-size: 10pt;
+}
+
+QPushButton:hover {
+    background-color: #388e3c;
+}
+
+QPushButton:pressed {
+    background-color: #2e7d32;
+}
+
+QPushButton:disabled {
+    background-color: #a5d6a7;
+    color: #757575;
+}
+
+QComboBox {
+    border: 1px solid #cccccc;
+    border-radius: 3px;
+    padding: 6px 8px;
+    font-size: 10pt;
+    background-color: white;
+    min-height: 32px;
+}
+
+QComboBox:focus {
+    border: 1px solid #4caf50;
+}
+
+QComboBox::drop-down {
+    border: none;
+    width: 20px;
+}
+
+QComboBox::down-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 6px solid #4caf50;
+}
+
+QLabel {
+    font-size: 10pt;
+    color: #333333;
+}
+
+QLabel#labelHint {
+    color: #666666;
+    font-style: italic;
+    font-size: 9pt;
+}
+
+QRadioButton {
+    font-size: 10pt;
+    color: #333333;
+    spacing: 8px;
+}
+
+QRadioButton::indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    border: 2px solid #cccccc;
+}
+
+QRadioButton::indicator:checked {
+    background-color: #4caf50;
+    border: 2px solid #388e3c;
+}
+
+QStatusBar {
+    background-color: #f5f5f5;
+    color: #666666;
+    font-size: 9pt;
+    padding: 4px 8px;
+    border-top: 1px solid #e0e0e0;
+}
+
+QScrollArea {
+    border: none;
+    background-color: transparent;
+}
+
+QScrollBar:vertical {
+    border: none;
+    background-color: #f0f0f0;
+    width: 10px;
+    border-radius: 5px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #c0c0c0;
+    border-radius: 5px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #a0a0a0;
+}
+
+QTabWidget::pane {
+    border: 1px solid #e0e0e0;
+    border-radius: 3px;
+    background-color: white;
+}
+
+QTabBar::tab {
+    background-color: #f0f0f0;
+    border: 1px solid #e0e0e0;
+    border-bottom: none;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    padding: 8px 16px;
+    margin-right: 2px;
+}
+
+QTabBar::tab:selected {
+    background-color: white;
+    border-bottom: 1px solid white;
+}
+
+QTabBar::tab:hover:!selected {
+    background-color: #f8f8f8;
+}</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="mainLayout">
+    <item>
+     <widget class="QGroupBox" name="groupBoxMode">
+      <property name="title">
+       <string>Режим работы</string>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayoutMode">
+       <item>
+        <widget class="QRadioButton" name="radioFinite">
+         <property name="text">
+          <string>Конечная последовательность</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="radioInfinite">
+         <property name="text">
+          <string>Бесконечная последовательность</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QRadioButton" name="radioStream">
+         <property name="text">
+          <string>Поток (ReadWriteStream)</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="groupBoxInput">
+      <property name="title">
+       <string>Входные данные</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayoutInput">
+       <item>
+        <widget class="QPlainTextEdit" name="textEditInput">
+         <property name="maximumHeight">
+          <number>120</number>
+         </property>
+         <property name="placeholderText">
+          <string>Введите числа через пробел или каждое с новой строки</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayoutFile">
+         <item>
+          <widget class="QLabel" name="labelFile">
+           <property name="text">
+            <string>Файл:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="lineEditFile">
+           <property name="placeholderText">
+            <string>Путь к файлу .txt или .docx (только для режима потока)</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnLoadFile">
+           <property name="text">
+            <string>Загрузить</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnInitialize">
+           <property name="text">
+            <string>Инициализировать</string>
+           </property>
+           <property name="toolTip">
+            <string>Загрузить входные данные в текущий объект</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnClearInput">
+           <property name="text">
+            <string>Очистить</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelInputHint">
+         <property name="text">
+          <string>Для последовательности - числа через пробел. Для потока - текст.</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeft</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="groupBoxOperation">
+      <property name="title">
+       <string>Операция</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayoutOperation">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayoutOperation">
+         <item>
+          <widget class="QLabel" name="labelOperation">
+           <property name="text">
+            <string>Выберите операцию:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="comboOperation">
+           <property name="minimumSize">
+            <size>
+             <width>350</width>
+             <height>0</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnExecute">
+           <property name="text">
+            <string>Выполнить</string>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>100</width>
+             <height>35</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QWidget" name="widgetParams" native="true">
+         <layout class="QGridLayout" name="gridLayoutParams">
+          <property name="horizontalSpacing">
+           <number>10</number>
+          </property>
+          <property name="verticalSpacing">
+           <number>8</number>
+          </property>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelParamHint">
+         <property name="text">
+          <string>Параметры операции появятся здесь после выбора операции</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeft</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="groupBoxOutput">
+      <property name="title">
+       <string>Результаты и логи</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayoutOutput">
+       <item>
+        <widget class="QTextEdit" name="textEditOutput">
+         <property name="maximumHeight">
+          <number>200</number>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="placeholderText">
+          <string>Здесь будут отображаться результаты операций и логи...</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayoutOutput">
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnClearOutput">
+           <property name="text">
+            <string>Очистить вывод</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnSaveOutput">
+           <property name="text">
+            <string>Сохранить в файл</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusBar">
+   <property name="styleSheet">
+    <string notr="true">QStatusBar {
+    font-size: 9pt;
+    color: #666666;
+    background-color: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
+}</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
