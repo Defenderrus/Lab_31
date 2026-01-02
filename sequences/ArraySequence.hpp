@@ -8,255 +8,215 @@
 template <typename T>
 class ArraySequence: public Sequence<T> {
     protected:
-        DynamicArray<T> *array;
-        virtual ArraySequence<T>* Mode() {
-            return this;
-        };
+        DynamicArray<T> array;
+        size_t length;
+
+        // Реаллокация
+        void increase(size_t capacity) {
+            size_t oldCapacity = array.GetSize();
+            if (capacity > oldCapacity) {
+                size_t newCapacity = oldCapacity ? oldCapacity : 1;
+                while (newCapacity < capacity) {
+                    newCapacity *= 2;
+                }
+                array.Resize(newCapacity);
+            }
+        }
+
+        void decrease() {
+            size_t oldCapacity = array.GetSize();
+            if (oldCapacity >= length*2 && oldCapacity > 1) {
+                size_t newCapacity = oldCapacity/2;
+                if (newCapacity < length) {
+                    newCapacity = length;
+                }
+                array.Resize(newCapacity);
+            }
+        }
     public:
         // Создание объекта
-        ArraySequence();
-        ~ArraySequence() override;
-        ArraySequence(T* items, size_t count);
-        ArraySequence(const DynamicArray<T> &other);
+        ArraySequence(): length(0), array(0) {}
+
+        ~ArraySequence() override = default;
+
+        ArraySequence(T *items, size_t count): length(count), array(items, count) {}
+
+        ArraySequence(const DynamicArray<T> &other): length(other.GetSize()), array(other) {}
+
+        ArraySequence(const ArraySequence<T> &other): length(other.length), array(other.array) {}
+        ArraySequence<T>& operator=(const ArraySequence<T> &other) {
+            if (this != &other) {
+                length = other.length;
+                array = other.array;
+            }
+            return *this;
+        }
 
         // Декомпозиция
-        size_t GetLength() const override;
-        T Get(size_t index) const override;
-        T GetFirst() const override;
-        T GetLast() const override;
+        size_t GetLength() const override { return length; }
+
+        T GetFirst() const override { return Get(0); }
+
+        T GetLast() const override { return Get(length-1); }
+
+        T Get(size_t index) const override {
+            if (length > index) {
+                return array.Get(index);
+            }
+            throw std::out_of_range("Некорректный индекс!");
+        }
 
         // Перегрузка операторов
-        T& operator[](size_t index) override;
-        const T& operator[](size_t index) const override;
+        T& operator[](size_t index) override {
+            if (length > index) {
+                return array[index];
+            }
+            throw std::out_of_range("Некорректный индекс!");
+        }
+
+        const T& operator[](size_t index) const override {
+            if (length > index) {
+                return array[index];
+            }
+            throw std::out_of_range("Некорректный индекс!");
+        }
 
         // Операции
-        Sequence<T>* Append(T item) override;
-        Sequence<T>* Prepend(T item) override;
-        Sequence<T>* Remove(size_t index) override;
-        Sequence<T>* InsertAt(T item, size_t index) override;
-        Sequence<T>* PutAt(T item, size_t index) override;
-        Sequence<T>* Concat(Sequence<T> *other) override;
-        Sequence<T>* GetSubsequence(size_t startIndex, size_t endIndex) override;
+        Sequence<T>* Append(T item) override {
+            increase(length+1);
+            array.Set(length, item);
+            length++;
+            return this;
+        }
+
+        Sequence<T>* Prepend(T item) override {
+            increase(length+1);
+            for (size_t i = length; i > 0; i--) {
+                array.Set(i, array.Get(i-1));
+            }
+            array.Set(0, item);
+            length++;
+            return this;
+        }
+
+        Sequence<T>* Remove(size_t index) override {
+            if (length <= index) {
+                throw std::out_of_range("Некорректный индекс!");
+            }
+            for (size_t i = index; i < length-1; i++) {
+                array.Set(i, array.Get(i+1));
+            }
+            length--;
+            decrease();
+            return this;
+        }
+
+        Sequence<T>* InsertAt(T item, size_t index) override {
+            if (length < index) {
+                throw std::out_of_range("Некорректный индекс!");
+            }
+            increase(length+1);
+            for (size_t i = length; i > index; i--) {
+                array.Set(i, array.Get(i-1));
+            }
+            array.Set(index, item);
+            length++;
+            return this;
+        }
+
+        Sequence<T>* PutAt(T item, size_t index) override {
+            if (length <= index) {
+                throw std::out_of_range("Некорректный индекс!");
+            }
+            array.Set(index, item);
+            return this;
+        }
+
+        Sequence<T>* Concat(Sequence<T> *other) override {
+            size_t otherLength = other->GetLength();
+            increase(length+otherLength);
+            for (size_t i = 0; i < otherLength; i++) {
+                array.Set(length+i, other->Get(i));
+            }
+            length += otherLength;
+            return this;
+        }
+
+        Sequence<T>* GetSubsequence(size_t startIndex, size_t endIndex) override {
+            if (length <= endIndex || startIndex > endIndex) {
+                throw std::out_of_range("Некорректные индексы!");
+            }
+            size_t subLength = endIndex-startIndex+1;
+            auto subSequence = new ArraySequence<T>();
+            subSequence->increase(subLength);
+            for (size_t i = 0; i < subLength; i++) {
+                subSequence->array.Set(i, array.Get(startIndex+i));
+            }
+            subSequence->length = subLength;
+            return subSequence;
+        }
 
         // Дополнительные операции
         template <typename U>
-        Sequence<U>* Map(std::function<U(T)> func);
-        Sequence<T>* Where(std::function<bool(T)> func);
-        T Reduce(std::function<T(T, T)> func, T start);
+        Sequence<U>* Map(std::function<U(T)> func) {
+            auto result = new ArraySequence<U>();
+            result->increase(length);
+            for (size_t i = 0; i < length; i++) {
+                result->array.Set(i, func(array.Get(i)));
+            }
+            result->length = length;
+            return result;
+        }
+
+        Sequence<T>* Where(std::function<bool(T)> func) {
+            auto result = new ArraySequence<T>();
+            for (size_t i = 0; i < length; i++) {
+                T value = array.Get(i);
+                if (func(value)) {
+                    result->increase(result->length+1);
+                    result->array.Set(result->length, value);
+                    result->length++;
+                }
+            }
+            return result;
+        }
+
+        T Reduce(std::function<T(T, T)> func, T start) {
+            T result = start;
+            for (size_t i = 0; i < length; i++) {
+                result = func(result, array.Get(i));
+            }
+            return result;
+        }
+
         template <typename U>
-        Sequence<std::pair<T, U>>* Zip(Sequence<U> *other);
+        Sequence<std::pair<T, U>>* Zip(Sequence<U> *other) {
+            size_t minLength = std::min(length, other->GetLength());
+            auto result = new ArraySequence<std::pair<T, U>>();
+            result->increase(minLength);
+            for (size_t i = 0; i < minLength; i++) {
+                result->array.Set(i, std::make_pair(array.Get(i), other->Get(i)));
+            }
+            result->length = minLength;
+            return result;
+        }
+
         template <typename U>
-        static std::pair<Sequence<T>*, Sequence<U>*> Unzip(Sequence<std::pair<T, U>> *sequence);
-};
-
-// Создание объекта
-template <typename T>
-ArraySequence<T>::ArraySequence() {
-    this->array = new DynamicArray<T>(0);
-}
-
-template <typename T>
-ArraySequence<T>::~ArraySequence() {
-    delete this->array;
-}
-
-template <typename T>
-ArraySequence<T>::ArraySequence(T* items, size_t count) {
-    this->array = new DynamicArray<T>(items, count);
-}
-
-template <typename T>
-ArraySequence<T>::ArraySequence(const DynamicArray<T> &other) {
-    this->array = new DynamicArray<T>(other);
-}
-
-// Декомпозиция
-template <typename T>
-size_t ArraySequence<T>::GetLength() const {
-    return this->array->GetSize();
-}
-
-template <typename T>
-T ArraySequence<T>::Get(size_t index) const {
-    return this->array->Get(index);
-}
-
-template <typename T>
-T ArraySequence<T>::GetFirst() const {
-    return this->array->Get(0);
-}
-
-template <typename T>
-T ArraySequence<T>::GetLast() const {
-    return this->array->Get(this->array->GetSize()-1);
-}
-
-// Перегрузка операторов
-template <typename T>
-T& ArraySequence<T>::operator[](size_t index) {
-    if (index >= this->array->GetSize()) {
-        throw std::out_of_range("Некорректный индекс!");
-    }
-    return (*this->array)[index];
-}
-
-template <typename T>
-const T& ArraySequence<T>::operator[](size_t index) const {
-    if (index >= this->array->GetSize()) {
-        throw std::out_of_range("Некорректный индекс!");
-    }
-    return (*this->array)[index];
-}
-
-// Операции
-template <typename T>
-Sequence<T>* ArraySequence<T>::Append(T item) {
-    ArraySequence<T> *newSequence = Mode();
-    DynamicArray<T> *newArray = new DynamicArray<T>(newSequence->array->GetSize()+1);
-    newArray->Set(newSequence->array->GetSize(), item);
-    for (size_t i = 0; i < newSequence->array->GetSize(); i++) {
-        newArray->Set(i, newSequence->array->Get(i));
-    }
-    newSequence->array = newArray;
-    return newSequence;
-}
-
-template <typename T>
-Sequence<T>* ArraySequence<T>::Prepend(T item) {
-    ArraySequence<T> *newSequence = Mode();
-    DynamicArray<T> *newArray = new DynamicArray<T>(newSequence->array->GetSize()+1);
-    newArray->Set(0, item);
-    for (size_t i = 0; i < newSequence->array->GetSize(); i++) {
-        newArray->Set(i+1, newSequence->array->Get(i));
-    }
-    newSequence->array = newArray;
-    return newSequence;
-}
-
-template <typename T>
-Sequence<T>* ArraySequence<T>::Remove(size_t index) {
-    if (index >= this->array->GetSize()) {
-        throw std::out_of_range("Некорректный индекс!");
-    }
-    ArraySequence<T> *newSequence = Mode();
-    DynamicArray<T> *newArray = new DynamicArray<T>(newSequence->array->GetSize()-1);
-    for (size_t i = 0; i < newSequence->array->GetSize(); i++) {
-        if (i < index) {
-            newArray->Set(i, newSequence->array->Get(i));
-        } else if (i > index) {
-            newArray->Set(i-1, newSequence->array->Get(i));
+        static std::pair<Sequence<T>*, Sequence<U>*> Unzip(Sequence<std::pair<T, U>> *sequence) {
+            auto first = new ArraySequence<T>();
+            auto second = new ArraySequence<U>();
+            size_t seqLength = sequence->GetLength();
+            first->increase(seqLength);
+            second->increase(seqLength);
+            for (size_t i = 0; i < seqLength; i++) {
+                auto pair = sequence->Get(i);
+                first->array.Set(i, pair.first);
+                second->array.Set(i, pair.second);
+            }
+            first->length = seqLength;
+            second->length = seqLength;
+            return std::make_pair(first, second);
         }
-    }
-    newSequence->array = newArray;
-    return newSequence;
-}
-
-template <typename T>
-Sequence<T>* ArraySequence<T>::InsertAt(T item, size_t index) {
-    ArraySequence<T> *newSequence = Mode();
-    newSequence->array->Set(index, item);
-    return newSequence;
-}
-
-template <typename T>
-Sequence<T>* ArraySequence<T>::PutAt(T item, size_t index) {
-    if (index >= this->array->GetSize()) {
-        throw std::out_of_range("Некорректный индекс!");
-    }
-    ArraySequence<T> *newSequence = Mode();
-    DynamicArray<T> *newArray = new DynamicArray<T>(newSequence->array->GetSize()+1);
-    newArray->Set(index, item);
-    for (size_t i = 0; i < newSequence->array->GetSize(); i++) {
-        if (i < index) {
-            newArray->Set(i, newSequence->array->Get(i));
-        } else {
-            newArray->Set(i+1, newSequence->array->Get(i));
-        }
-    }
-    newSequence->array = newArray;
-    return newSequence;
-}
-
-template <typename T>
-Sequence<T>* ArraySequence<T>::Concat(Sequence<T> *other) {
-    ArraySequence<T> *newSequence = Mode();
-    for (size_t i = 0; i < other->GetLength(); i++) {
-        newSequence->Append(other->Get(i));
-    }
-    return newSequence;
-}
-
-template <typename T>
-Sequence<T>* ArraySequence<T>::GetSubsequence(size_t startIndex, size_t endIndex) {
-    if (endIndex >= this->array->GetSize() || endIndex < startIndex) {
-        throw std::out_of_range("Некорректный индекс!");
-    }
-    DynamicArray<T> *newArray = new DynamicArray<T>(endIndex-startIndex+1);
-    for (size_t i = 0; i < endIndex-startIndex+1; i++) {
-        newArray->Set(i, this->array->Get(i+startIndex));
-    }
-    return new ArraySequence<T>(*newArray);
-}
-
-// Дополнительные операции
-template <typename T>
-template <typename U>
-Sequence<U>* ArraySequence<T>::Map(std::function<U(T)> func) {
-    ArraySequence<U> *sequence = new ArraySequence<U>();
-    for (size_t i = 0; i < this->GetLength(); i++) {
-        sequence->Append(func(this->Get(i)));
-    }
-    return sequence;
-}
-
-template <typename T>
-Sequence<T>* ArraySequence<T>::Where(std::function<bool(T)> func) {
-    ArraySequence<T> *sequence = new ArraySequence<T>();
-    for (size_t i = 0; i < this->GetLength(); i++) {
-        if (func(this->Get(i))) sequence->Append(this->Get(i));
-    }
-    return sequence;
-}
-
-template <typename T>
-T ArraySequence<T>::Reduce(std::function<T(T, T)> func, T start) {
-    for (size_t i = 0; i < this->GetLength(); i++) {
-        start = func(start, this->Get(i));
-    }
-    return start;
-}
-
-template <typename T>
-template <typename U>
-Sequence<std::pair<T, U>>* ArraySequence<T>::Zip(Sequence<U> *other) {
-    ArraySequence<std::pair<T, U>> *sequence = new ArraySequence<std::pair<T, U>>();
-    for (size_t i = 0; i < std::min(this->GetLength(), other->GetLength()); i++) {
-        sequence->Append(make_pair(this->Get(i), other->Get(i)));
-    }
-    return sequence;
-}
-
-template <typename T>
-template <typename U>
-std::pair<Sequence<T>*, Sequence<U>*> ArraySequence<T>::Unzip(Sequence<std::pair<T, U>> *sequence) {
-    ArraySequence<T> *first = new ArraySequence<T>();
-    ArraySequence<U> *second = new ArraySequence<U>();
-    for (size_t i = 0; i < sequence->GetLength(); i++) {
-        auto pair = sequence->Get(i);
-        first->Append(pair.first);
-        second->Append(pair.second);
-    }
-    return make_pair(first, second);
-}
-
-template <typename T>
-class ImmutableArraySequence: public ArraySequence<T> {
-    protected:
-        ArraySequence<T>* Mode() override {
-            return new ArraySequence<T>(*this->array);
-        }
-    public:
-        using ArraySequence<T>::ArraySequence;
 };
 
 #endif // ARRAYSEQUENCE_HPP

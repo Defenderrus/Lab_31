@@ -102,25 +102,22 @@ class LazySequence: public Sequence<T> {
             
             size_t old_size = sequence.GetSize();
             size_t new_size = index+1;
-            DynamicArray<T> new_sequence(new_size);
-            for (size_t i = 0; i < old_size; i++) new_sequence[i] = sequence[i];
-            
             if (!generator) {
                 if (length.IsFinite() && index < length.GetFiniteValue()) {
-                    for (size_t i = old_size; i < new_size; i++) new_sequence[i] = T();
-                    const_cast<LazySequence<T>*>(this)->sequence = move(new_sequence);
+                    const_cast<LazySequence<T>*>(this)->sequence.Resize(new_size);
+                    for (size_t i = old_size; i < new_size; i++) sequence[i] = T();
                     return;
                 }
                 throw runtime_error("Отсутствует генератор и невозможно создать элементы!");
             } else {
+                const_cast<LazySequence<T>*>(this)->sequence.Resize(new_size);
                 for (size_t i = old_size; i < new_size; i++) {
                     if (!generator->HasNext()) {
                         if (length.IsFinite()) throw runtime_error("Генератор произвел меньше элементов, чем ожидалось!");
                         else throw runtime_error("Генератор бесконечной последовательности неожиданно завершился!");
                     }
-                    new_sequence[i] = generator->GetNext();
+                    sequence[i] = generator->GetNext();
                 }
-                const_cast<LazySequence<T>*>(this)->sequence = move(new_sequence);
             }
         }
     public:
@@ -161,6 +158,8 @@ class LazySequence: public Sequence<T> {
 
         LazySequence(const LazySequence<T> &other): sequence(other.sequence), generator(other.generator), length(other.length) {}
 
+        LazySequence(LazySequence<T> &&other) noexcept: sequence(move(other.sequence)), generator(move(other.generator)), length(move(other.length)) {}
+
         // Декомпозиция
         size_t GetLength() const override {
             if (length.IsFinite()) return length.GetFiniteValue();
@@ -198,6 +197,15 @@ class LazySequence: public Sequence<T> {
             Cache(index);
             if (index < sequence.GetSize()) return sequence[index];
             throw out_of_range("Индекс за пределами последовательности");
+        }
+
+        LazySequence& operator=(LazySequence<T> &&other) noexcept {
+            if (this != &other) {
+                sequence = move(other.sequence);
+                generator = move(other.generator);
+                length = move(other.length);
+            }
+            return *this;
         }
         
         // Операции
@@ -384,10 +392,22 @@ class LazySequence: public Sequence<T> {
         Sequence<T>* GetSubsequence(size_t startIndex, size_t endIndex) override {
             if (startIndex > endIndex) throw out_of_range("Начальный индекс больше конечного!");
             if (length.IsFinite() && endIndex >= length.GetFiniteValue()) throw out_of_range("Индекс выходит за пределы последовательности!");
-            size_t sub_len = endIndex - startIndex + 1;
-            DynamicArray<T> sub_arr(sub_len);
-            for (size_t i = 0; i < sub_len; i++) sub_arr.Set(i, Get(startIndex + i));
-            return new LazySequence(sub_arr);
+            auto new_seq = new LazySequence<T>();
+            auto current = make_shared<size_t>(startIndex);
+            auto temp_seq = make_shared<LazySequence<T>>(*this);
+            new_seq->generator = make_shared<Generator<T>>(
+                [temp_seq, current, endIndex]() mutable -> T {
+                    if (*current > endIndex) throw runtime_error("Нет больше элементов!");
+                    T value = temp_seq->Get(*current);
+                    (*current)++;
+                    return value;
+                },
+                [current, endIndex]() mutable -> bool {
+                    return *current <= endIndex;
+                }
+            );
+            new_seq->length = Cardinal::Finite(endIndex-startIndex+1);
+            return new_seq;
         }
 
         // Дополнительные операции

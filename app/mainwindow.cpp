@@ -1935,9 +1935,6 @@ void MainWindow::infiniteSubsequence()
     }
 
     try {
-        auto subSeq = infiniteSequence->GetSubsequence(start, end);
-        infiniteSequence = shared_ptr<LazySequence<int>>(dynamic_cast<LazySequence<int>*>(subSeq));
-
         auto lazySeq = dynamic_cast<LazySequence<int>*>(infiniteSequence->GetSubsequence(start, end));
         auto newArray = make_shared<DynamicArray<int>>(lazySeq->GetLength());
         for (size_t i = 0; i < lazySeq->GetLength(); i++) {
